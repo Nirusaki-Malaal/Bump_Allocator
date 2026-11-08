@@ -1,54 +1,22 @@
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <stdio.h>
-#include <string.h>
 
+#include "allocator.h"
+#include "menu.h"
 
 // macros
-#define MENU printf("====================================\n          NEUTRON ALLOCATOR\n====================================\n\n  1. Allocate Memory\n  2. View Memory Stats\n  3. Reset Allocator\n  4. Exit\n\n====================================\n  Select an option: ")
+#define MENU "====================================\n          NEUTRON ALLOCATOR\n====================================\n\n  1. Allocate Memory\n  2. View Memory Stats\n  3. Reset Allocator\n  4. Exit\n\n====================================\n  Select an option: "
 
-// constants
-const size_t heap_size = 4096;
-
-// global variable
-size_t used_size = 0;
-
-
-void reset(unsigned char* ptr) {
-    // reset the allocator simple to implement
-    memset(ptr, 0, heap_size); // set the whole space to zero
-    used_size = 0;
-}
-
-void stats(void) {
-    // shows the stats of the allocator
-    printf("\nHeap Size   :  %zu\n", heap_size);
-    printf("Used Memory   :  %zu\n" , used_size);
-    printf("Free Memory   :  %zu\n", heap_size-used_size);
-}
-
-unsigned char* allocate(unsigned char* mmap_ptr,size_t mem_size) {
-    // allocate the memory with bound safety checks
-    if (mem_size == 0 || used_size > heap_size || mem_size > heap_size - used_size) {
-        printf("Invalid Memory Size\n");
-        return NULL;
-    }
-    unsigned char* ptr1 = mmap_ptr + used_size;
-    used_size += mem_size;
-    return ptr1;
-}
-
-int main(void) {
+int run_menu(void) {
     // main function wrapped in a switch statement
-    unsigned char *ptr = mmap(NULL, heap_size, PROT_READ | PROT_WRITE ,MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    unsigned char *ptr = bump_create();
 
-    if(ptr == MAP_FAILED)  {
+    if (ptr == NULL) {
         printf("Unable to create mmap ");
         return -1;
     }
     // print the menu
-    MENU;
+    printf("%s", MENU);
      while(1) {
         size_t choice;
         int print = scanf("%zu", &choice);
@@ -103,10 +71,10 @@ int main(void) {
                 }
                 break;
         }
-        MENU;
+        printf("%s", MENU);
     }
     exit_menu: // better code
-        if (munmap(ptr, heap_size) != 0){
+        if (bump_destroy(ptr) != 0){
             return EXIT_FAILURE;
         } else {
             return EXIT_SUCCESS;
