@@ -1,0 +1,9 @@
+# build output
+build/
+neutron
+main
+
+# editor / OS
+*.o
+*.swp
+.DS_Store
